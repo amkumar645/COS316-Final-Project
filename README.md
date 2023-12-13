@@ -1,4 +1,4 @@
 To setup:
 
-Create new python environment
-pip install -r requirements.txt
+Optional: Create new python environment and cd into it
+pip install scapy

@@ -1,61 +1,71 @@
-from scapy.all import IP, TCP, UDP
+from scapy.all import IP, TCP, UDP, ICMP
+import dns
 
 class MockFirewall:
   def __init__(self):
     #
     self.rules = []
 
-  def add_rule(self, source_ip_start, source_ip_end, dest_ip_start, dest_ip_end, protocol, port_start, port_end, action):
+  def add_rule(self, ips, protocols, ports, action):
     # Rules will relate to IP, protocol, and port
     rule = {
       # Rules can have range of IP addresses, ports
-      'source_ip_start': source_ip_start,
-      'source_ip_end': source_ip_end,
-      'dest_ip_start': dest_ip_start,
-      'dest_ip_end': dest_ip_end,
-      'protocol': protocol,
-      'port_start': port_start,
-      'port_end': port_end,
-      'action': action  # what to do with packets that satisfy these rules
+      'ips': ips,
+      'protocols': protocols,
+      'ports': ports,
+      'action': action  # what to do with packets that satisfy any of these rules
     }
     self.rules.append(rule)
 
   def process_packet(self, packet):
     # Check to see if packet should be allowed or rejected
     for rule in self.rules:
-      source_ip_range = packet[IP].src >= rule['source_ip_start'] and packet[IP].src <= rule['source_ip_end']
-      dest_ip_range = packet[IP].dst >= rule['dest_ip_start'] and packet[IP].dst <= rule['dest_ip_end']
-      right_protocol = packet.payload.name == rule['protocol']
-      port_range = packet[packet.payload.name].dport >= rule['port_start'] and packet[packet.payload.name].dport <= rule['port_end']
-      if source_ip_range and dest_ip_range and right_protocol and port_range:
+      protocol_condition = False
+      ip_condition = False
+      port_condition = False
+      # Check protocol
+      if packet.payload.name in rule['protocols']:
+        protocol_condition = True
+      if packet[IP].dst in rule['ips']:
+        ip_condition = True
+      if packet[packet.payload.name].dport in rule['ports']:
+        port_condition = True
+      if protocol_condition or ip_condition or port_condition:
         if rule['action'] == 'reject':
           return "Rejected"
-      return "Allowed"
+    return "Allowed"
+
+list_of_ips = dns.list_of_ips
+list_of_ports = list(range(100))
+list_of_protocols = [
+  "TCP", "UDP", "ICMP"
+]
 
 # Example usage:
 firewall = MockFirewall()
 firewall.add_rule(
-  source_ip_start="192.168.1.2",
-  source_ip_end="192.168.1.9",
-  dest_ip_start="192.168.1.1",
-  dest_ip_end="192.168.1.6",
-  protocol="TCP",
-  port_start=80, 
-  port_end=90,
+  ips = list_of_ips[0:10],
+  ports = list_of_ports[0:10],
+  protocols = list_of_protocols[1:2],
   action='reject'
 )
 
 # Should return Allowed
-packet = IP(src="192.168.1.5", dst="192.168.1.3") / TCP(dport=91)
+packet = IP(src="192.168.0.0", dst=list_of_ips[11]) / TCP(dport=91)
 result = firewall.process_packet(packet)
 print(result)
 
-# Should return Rejected
-packet = IP(src="192.168.1.5", dst="192.168.1.3") / TCP(dport=86)
+# Should return Rejected (due to IP)
+packet = IP(src="192.168.0.0", dst=list_of_ips[1]) / TCP(dport=86)
 result = firewall.process_packet(packet)
 print(result)
 
-# Should return Allowed
-packet = IP(src="192.168.1.5", dst="192.168.1.3") / UDP(dport=86)
+# Should return Rejected (due to protocol)
+packet = IP(src="192.168.0.0", dst=list_of_ips[11]) / UDP(dport=91)
+result = firewall.process_packet(packet)
+print(result)
+
+# Should return Rejected (due to port)
+packet = IP(src="192.168.0.0", dst=list_of_ips[11]) / TCP(dport=0)
 result = firewall.process_packet(packet)
 print(result)
