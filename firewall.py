@@ -1,19 +1,19 @@
-from scapy.all import IP, TCP, UDP, ICMP
-import dns
+from scapy.all import IP, TCP, UDP
 
 class MockFirewall:
   def __init__(self):
-    #
+    # IP: list of 50 options
+    # Protocol: List of 3 options
+    # Port: list of 100 options
     self.rules = []
 
   def add_rule(self, ips, protocols, ports, action):
     # Rules will relate to IP, protocol, and port
     rule = {
-      # Rules can have range of IP addresses, ports
       'ips': ips,
       'protocols': protocols,
       'ports': ports,
-      'action': action  # what to do with packets that satisfy any of these rules
+      'action': action  # what to do with packets that satisfy any of these rules (always reject)
     }
     self.rules.append(rule)
 
@@ -34,38 +34,3 @@ class MockFirewall:
         if rule['action'] == 'reject':
           return "Rejected"
     return "Allowed"
-
-list_of_ips = dns.list_of_ips
-list_of_ports = list(range(100))
-list_of_protocols = [
-  "TCP", "UDP", "ICMP"
-]
-
-# Example usage:
-firewall = MockFirewall()
-firewall.add_rule(
-  ips = list_of_ips[0:10],
-  ports = list_of_ports[0:10],
-  protocols = list_of_protocols[1:2],
-  action='reject'
-)
-
-# Should return Allowed
-packet = IP(src="192.168.0.0", dst=list_of_ips[11]) / TCP(dport=91)
-result = firewall.process_packet(packet)
-print(result)
-
-# Should return Rejected (due to IP)
-packet = IP(src="192.168.0.0", dst=list_of_ips[1]) / TCP(dport=86)
-result = firewall.process_packet(packet)
-print(result)
-
-# Should return Rejected (due to protocol)
-packet = IP(src="192.168.0.0", dst=list_of_ips[11]) / UDP(dport=91)
-result = firewall.process_packet(packet)
-print(result)
-
-# Should return Rejected (due to port)
-packet = IP(src="192.168.0.0", dst=list_of_ips[11]) / TCP(dport=0)
-result = firewall.process_packet(packet)
-print(result)
