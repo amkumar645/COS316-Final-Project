@@ -1,5 +1,5 @@
 ## Setup
-To set up the project, you can create a Python virtual environment. Within the environment, run: 
+To set up the project, install the necessary packages: 
 - pip install scapy
 
 ## Simple Firewall
@@ -11,7 +11,9 @@ To reproduce results regarding the Simple Firewall, cd into the simple_firewall 
 - exgen.py: Contains the implementation of the ExGen Algorithm for the Simple Firewall
 - randomized_firewall.py: Creates a Simple Firewall with randomized rules, then solves it with the Naive, SSGen, and ExGen algorithms and prints the results
 
-To see the results, run: python randomized_firewall.py 
+To see the results, run: 
+- cd simple_firewall
+- python randomized_firewall.py 
 
 ## Complex Firewall
 To reproduce results regarding the Complex Firewall, cd into the complex_firewall directory. Within this directory, the files are:
@@ -22,6 +24,8 @@ To reproduce results regarding the Complex Firewall, cd into the complex_firewal
 - exgen.py: Contains the implementation of the ExGen Algorithm for the Complex Firewall
 - example_firewalls.py: Creates 3 Complex Firewalls, one with 1 randomized rule, one with 2 randomized rules, and one with 3 randomized rules, and then solves it with the Naive, SSGen, and ExGen algorithms and prints the results
 
-To see the results, run: python example_firewalls.py 
+To see the results, run: 
+- cd complex_firewall
+- python example_firewalls.py 
 
 This project was made by Arnav Kumar and Jeremy Kiil for the Fall 2023 Semester of COS316. Both Arnav and Jeremy contributed to code equally (through in-person coding sessions and LiveShare with VSCode). 
