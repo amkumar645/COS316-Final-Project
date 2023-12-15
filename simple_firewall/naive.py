@@ -1,14 +1,10 @@
 from scapy.all import IP, TCP, UDP
-import dns
 
 class NaiveSolver:
-  def __init__(self, domains, protocols, ports, firewall):
-    self.domains = domains
+  def __init__(self, ips, protocols, ports, firewall):
     self.protocols = protocols
     self.ports = ports
-    self.ips = []
-    for domain in domains:
-      self.ips.append(dns.get_ip_address(domain))
+    self.ips = ips
     # Create all possible packets from ips, protocols and ports
     self.packets = []
     self.configs = []

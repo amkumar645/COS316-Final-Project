@@ -1,4 +1,4 @@
-from scapy.all import IP, TCP, UDP
+from scapy.all import IP
 
 class MockFirewall:
   def __init__(self):
@@ -30,7 +30,7 @@ class MockFirewall:
         ip_condition = True
       if packet[packet.payload.name].dport in rule['ports']:
         port_condition = True
-      if protocol_condition or ip_condition or port_condition:
+      if protocol_condition and ip_condition and port_condition:
         if rule['action'] == 'reject':
           return "Rejected"
     return "Allowed"

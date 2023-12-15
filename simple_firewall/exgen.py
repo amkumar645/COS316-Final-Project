@@ -2,14 +2,11 @@ from scapy.all import IP, TCP, UDP
 import dns
 import random
 
-class GeneticSolver:
-  def __init__(self, domains, protocols, ports, firewall, population_size, generations):
-    self.domains = domains
+class ExhaustiveGeneticSolver:
+  def __init__(self, ips, protocols, ports, firewall, population_size, generations):
     self.protocols = protocols
     self.ports = ports
-    self.ips = []
-    for domain in domains:
-      self.ips.append(dns.get_ip_address(domain))
+    self.ips = ips
     self.current_population = []
     self.configs = []
     # Create a random population of population_size
@@ -28,6 +25,7 @@ class GeneticSolver:
     self.population_size = population_size
   
   def solve_firewall(self):
+    allowed_flag = False
     configs_used = set()
     remaining_ips = self.ips
     remaining_protocols = self.protocols
@@ -48,34 +46,38 @@ class GeneticSolver:
         configs_used.add((ip, protocol, port))
         # if packet allowed, then we learn nothing
         if result == "Allowed":
-          # Add 3 children into next gen, each changing ip, protocol, or port
-          # Only change IP
-          random_ip = random.sample(remaining_ips, 1)[0]
-          if protocol == "TCP":
-            packet_1 = IP(src="192.168.0.0", dst=random_ip) / TCP(dport=port)
-          if protocol == "UDP":
-            packet_1 = IP(src="192.168.0.0", dst=random_ip) / UDP(dport=port)
-          if (random_ip, protocol, port) not in configs_used:
-            next_generation.append((random_ip, protocol, port, packet_1))
-            changed_rule.append("ip")
-          # Only change protocol
-          random_protocol = random.sample(remaining_protocols, 1)[0]
-          if random_protocol == "TCP":
-            packet_2 = IP(src="192.168.0.0", dst=ip) / TCP(dport=port)
-          if random_protocol == "UDP":
-            packet_2 = IP(src="192.168.0.0", dst=ip) / UDP(dport=port)
-          if (ip, random_protocol, port) not in configs_used:
-            next_generation.append((ip, random_protocol, port, packet_2))
-            changed_rule.append("protocol")
-          # Only change port
-          random_port = random.sample(remaining_ports, 1)[0]
-          if protocol == "TCP":
-            packet_3 = IP(src="192.168.0.0", dst=ip) / TCP(dport=random_port)
-          if protocol == "UDP":
-            packet_3 = IP(src="192.168.0.0", dst=ip) / UDP(dport=random_port)
-          if (ip, protocol, random_port) not in configs_used:
-            next_generation.append((ip, protocol, random_port, packet_3))
-            changed_rule.append("port") 
+          # only need 1 allowed to figure out all rules
+          if allowed_flag: 
+            continue
+          allowed_flag = True
+          # Add all possible children that change one attribute
+          # All possible IP changes
+          for next_ip in self.ips:
+            if protocol == "TCP":
+              packet_new = IP(src="192.168.0.0", dst=next_ip) / TCP(dport=port)
+            if protocol == "UDP":
+              packet_new = IP(src="192.168.0.0", dst=next_ip) / UDP(dport=port)
+            if (next_ip, protocol, port) not in configs_used:
+              next_generation.append((next_ip, protocol, port, packet_new))
+              changed_rule.append("ip")
+          # All possible protocol changes
+          for next_protocol in self.protocols:
+            if next_protocol == "TCP":
+              packet_new = IP(src="192.168.0.0", dst=ip) / TCP(dport=port)
+            if next_protocol == "UDP":
+              packet_new = IP(src="192.168.0.0", dst=ip) / UDP(dport=port)
+            if (ip, next_protocol, port) not in configs_used:
+              next_generation.append((ip, next_protocol, port, packet_new))
+              changed_rule.append("protocol")
+          # All possible port changes
+          for next_port in self.ports:
+            if protocol == "TCP":
+              packet_new = IP(src="192.168.0.0", dst=ip) / TCP(dport=next_port)
+            if protocol == "UDP":
+              packet_new = IP(src="192.168.0.0", dst=ip) / UDP(dport=next_port)
+            if (ip, protocol, next_port) not in configs_used:
+              next_generation.append((ip, protocol, next_port, packet_new))
+              changed_rule.append("port")
         # if packet rejected, then whatever last change was is guaranteed rule (unless first gen)
         elif result == "Rejected":
           if gen == 0:
@@ -102,9 +104,5 @@ class GeneticSolver:
             except ValueError as e:
               continue
       self.current_population = next_generation
-    return sorted(list(ip_rules)), sorted(list(protocol_rules)), sorted(list(port_rules)), packet_sent_count
-          
-
-
-
-
+      if gen > 0:
+        return sorted(list(ip_rules)), sorted(list(protocol_rules)), sorted(list(port_rules)), packet_sent_count
