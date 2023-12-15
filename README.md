@@ -23,3 +23,5 @@ To reproduce results regarding the Complex Firewall, cd into the complex_firewal
 - example_firewalls.py: Creates 3 Complex Firewalls, one with 1 randomized rule, one with 2 randomized rules, and one with 3 randomized rules, and then solves it with the Naive, SSGen, and ExGen algorithms and prints the results
 
 To see the results, run: python example_firewalls.py 
+
+This project was made by Arnav Kumar and Jeremy Kiil for the Fall 2023 Semester of COS316. Both Arnav and Jeremy contributed to code equally (through in-person coding sessions and LiveShare with VSCode). 
